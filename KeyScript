@@ -1,0 +1,45 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class KeyScript : MonoBehaviour
+{
+    [SerializeField] GameObject player;
+    public bool isPickedUp;
+    private Vector2 vel;
+    public float smoothTime;
+    bool isCollided;
+
+    private void Start()
+    {
+        isCollided = false;
+    }
+
+    private void Update()
+    {
+        if (isPickedUp)
+        {
+            Vector3 offset = new Vector3(0, 2, 0);
+            transform.position = Vector2.SmoothDamp(transform.position, player.transform.position + offset, ref vel, smoothTime);
+        }
+
+        if (Input.GetKeyDown(KeyCode.E) && isCollided)
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.tag == "Player")
+        {
+            isPickedUp = true;
+        }
+
+        if(collision.tag == "EndLevelDoor" )
+        {
+            isCollided = true;
+        }
+    }
+}
