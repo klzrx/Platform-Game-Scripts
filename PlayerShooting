@@ -1,0 +1,41 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class PlayerShooting : MonoBehaviour
+{
+
+    [SerializeField] float fireRate;
+    bool canShoot;
+    float timer;
+
+    [SerializeField] Transform firePoint;
+    [SerializeField] GameObject fireball;
+    void Update()
+    {
+        CanShoot();
+        if (Input.GetMouseButtonDown(1) && CanShoot())
+        {
+            Shoot();
+        }
+    }
+
+    void Shoot()
+    {
+        Instantiate(fireball,firePoint.position,firePoint.rotation);
+        timer = 0;
+    }
+
+    bool CanShoot()
+    {
+        timer += Time.deltaTime;
+        if (timer > .5f)
+        {
+            return true;
+        }
+        else 
+        {
+            return false;
+        }
+    }
+}
