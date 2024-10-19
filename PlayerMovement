@@ -1,0 +1,156 @@
+using System.Collections;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class PlayerMovement : MonoBehaviour
+{
+    public PlayerInteraction playerInt;
+
+    private float horizontal;
+    [SerializeField] float speed = 8f;
+    [SerializeField] float crouchSpeed;
+    [SerializeField] float jumpingPower = 16f;
+    private bool isFacingRight = true;
+
+    [SerializeField] GameObject dashingAbility;
+    private bool hasDash = false;
+    private bool canDash = true;
+    private bool isDashing;
+    private float dashingPower = 24f;
+    private float dashingTime = 0.2f;
+    private float dashingCooldown = .5f;
+
+    [SerializeField] float ySize = 100.0f;
+    bool isCrouching = false;
+    private Vector3 startSize;
+
+    private Animator animator;
+    [SerializeField] private Rigidbody2D rb;
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private TrailRenderer tr;
+    [SerializeField] private BoxCollider2D collider;
+
+    private void Start()
+    {
+        animator = GetComponentInChildren<Animator>();
+        rb = GetComponent<Rigidbody2D>();
+        startSize = collider.size;
+        hasDash = false;
+    }
+    private void Update()
+    {
+        if (isDashing)
+        {
+            return;
+        }
+        //normal a and d movement with jumping. GetbuttonUp meaning when releasing the button the player stops increasing in height
+        horizontal = Input.GetAxisRaw("Horizontal");
+
+        if (horizontal != 0)
+        {
+            animator.SetBool("isRunning", true);
+        }
+        else
+        {
+            animator.SetBool("isRunning", false);
+        }
+
+        if (Input.GetButtonDown("Jump") && IsGrounded())
+        {
+            rb.velocity = new Vector2(rb.velocity.x, jumpingPower);
+            animator.SetBool("isJumping", true);
+        }
+        if (Input.GetButtonUp("Jump") && rb.velocity.y > 0f)
+        {
+            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.5f);
+        }
+        if (IsGrounded())
+        {
+            animator.SetBool("isJumping", false) ;
+        }
+
+        if (Input.GetKeyDown(KeyCode.LeftShift) && canDash && hasDash)
+        {
+            StartCoroutine(Dash());
+        }
+        if (Input.GetKeyDown(KeyCode.LeftControl))
+        {
+            speed = crouchSpeed;
+            IsCrouching();
+        }
+        if (Input.GetKeyUp(KeyCode.LeftControl))
+        {
+            if (isCrouching)
+            {
+                speed = 8f;
+                isCrouching = false;
+                collider.size = startSize;
+            }
+        }
+
+        Flip();
+    }
+
+    private void FixedUpdate()
+    {
+        if (isDashing)
+        {
+            return;
+        }
+
+        rb.velocity = new Vector2(horizontal * speed, rb.velocity.y);
+    }
+
+    private bool IsGrounded()
+    {
+        return Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
+    }
+
+    private void Flip()
+    {
+        if (isFacingRight && horizontal < 0f || !isFacingRight && horizontal > 0f)
+        {
+            isFacingRight = !isFacingRight;
+            transform.Rotate(0, 180, 0);
+        }
+    }
+
+    private IEnumerator Dash()
+    {
+        canDash = false;
+        isDashing = true;
+        float originalGravity = rb.gravityScale;
+        rb.gravityScale = 0f;
+        if (isFacingRight)
+        {
+            rb.velocity = new Vector2(transform.localScale.x * dashingPower, 0f);
+        }
+        else
+        {
+            rb.velocity = new Vector2(-transform.localScale.x * dashingPower, 0f);
+        }
+        tr.emitting = true;
+        yield return new WaitForSeconds(dashingTime);
+        tr.emitting = false;
+        rb.gravityScale = originalGravity;
+        isDashing = false;
+        yield return new WaitForSeconds(dashingCooldown);
+        canDash = true;
+    }
+
+    private void IsCrouching()
+    {
+        collider.size = new Vector3(collider.size.x, ySize);
+        isCrouching = true;
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag == "Dashing")
+        {
+            hasDash = true;
+            Destroy(collision.gameObject);
+        }
+    }
+} 
