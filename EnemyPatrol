@@ -1,0 +1,52 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class EnemyPatrol : MonoBehaviour
+{
+    [SerializeField]
+    GameObject[] waypoints;
+
+    [SerializeField]
+    float speed;
+
+    [SerializeField]
+    float prox;
+
+    Rigidbody2D rb;
+
+    int currentIndex;
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        currentIndex = 0;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        MoveToCurrentPoint();
+        UpdatePatrol();
+    }
+
+    void MoveToCurrentPoint()
+    {
+        Transform targetPoint = waypoints[currentIndex].transform;
+        Vector2 direction = (targetPoint.position - transform.position).normalized;
+        rb.velocity = direction * speed;
+    }
+    void UpdatePatrol()
+    {
+        if (IsCloseToCurrentPoint()) 
+        {
+            currentIndex = (currentIndex + 1) % waypoints.Length;
+        }
+    }
+    bool IsCloseToCurrentPoint()
+    {
+        Transform targetPoint = waypoints[currentIndex].transform;
+        return Vector2.Distance(transform.position, targetPoint.position) < prox;
+    }
+}
